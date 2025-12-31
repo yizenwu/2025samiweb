@@ -46,24 +46,7 @@
       z-index:6;
     }
 
-    /* custom cursor only on fine pointers (JS also removes on coarse) */
-    .cursor{
-      position:fixed; left:0; top:0;
-      width:18px; height:18px;
-      border-radius:999px;
-      background:rgba(0,0,0,.9);
-      transform:translate(-50%,-50%);
-      z-index:9999;
-      pointer-events:none;
-      transition: width .18s ease, height .18s ease, background .18s ease, opacity .2s ease;
-      opacity:0;
-    }
-    .cursor--big{
-      width:56px; height:56px;
-      background:rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.35);
-      backdrop-filter: blur(10px);
-    }
+    
 
     header{
       position:fixed;
@@ -164,7 +147,7 @@
     }
     .workBg{
       position:absolute; inset:-80px;
-      background-image:url("2_WorkIMG/MainCard.jpg");
+      background-image:url("../1_IndexIMG/MainCard.jpg");
       background-size:cover;
       background-position:center;
       transform: translate3d(0, var(--wby, 0px), 0) scale(1.06);

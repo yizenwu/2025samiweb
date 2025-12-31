@@ -12,17 +12,18 @@
 </head>
 
 <body>
-  <div class="cursor" id="cursor" aria-hidden="true"></div>
   <div class="vignette" aria-hidden="true"></div>
   <canvas id="grain" aria-hidden="true"></canvas>
 
   <header>
     <div class="topbar">
       <div class="brand">
-        <a class="js-hover" href="index.html" aria-label="Home"></a>
+        <a class="js-hover" href="index.html" aria-label="Home">
+         
+        </a>
       </div>
       <nav aria-label="Primary">
-        <a class="navlink js-hover is-active" href="index.html">主頁</a>
+        <a class="navlink js-hover is-active" href="index.html" aria-current="page">主頁</a>
         <a class="navlink js-hover" href="work.html">作品集</a>
         <a class="navlink js-hover" href="about.html">關於我</a>
       </nav>
@@ -33,7 +34,7 @@
     <section class="panel workHero" id="top">
       <div class="workHeroFrame">
         <div class="workBg" id="workBg"></div>
-        <div class="workInk"></div>
+        <div class="workInk" aria-hidden="true"></div>
         <div class="workTitleWrap">
           <div class="workTitle">SAMMY'S SPACE</div>
         </div>
@@ -42,22 +43,19 @@
 
     <section class="panel works" id="works">
       <div class="cardsStage">
-        <a class="card card--paint js-hover" data-dir="-1" href="work.html#paint">
+        <a class="card card--paint js-hover" data-dir="-1" href="work.html#paint" aria-label="Paint">
           <div class="cardMedia" style="background-image:url('2_WorkIMG/paint/1.jpg')"></div>
           <div class="cardLabel">PAINT</div>
         </a>
-
-        <a class="card card--diy js-hover" data-dir="1" href="work.html#animation">
+        <a class="card card--diy js-hover" data-dir="1" href="work.html#animation" aria-label="ANIMATION">
           <div class="cardMedia" style="background-image:url('2_WorkIMG/animation/poster.jpg')"></div>
           <div class="cardLabel">ANIMATION</div>
         </a>
-
-        <a class="card card--comic js-hover" data-dir="-1" href="work.html#comic">
+        <a class="card card--comic js-hover" data-dir="-1" href="work.html#comic" aria-label="Comic">
           <div class="cardMedia" style="background-image:url('2_WorkIMG/comic/1.jpg')"></div>
           <div class="cardLabel">COMIC</div>
         </a>
-
-        <a class="card card--cosplay js-hover" data-dir="1" href="work.html#cosplay">
+        <a class="card card--cosplay js-hover" data-dir="1" href="work.html#cosplay" aria-label="Cosplay">
           <div class="cardMedia" style="background-image:url('2_WorkIMG/cosplay/1.jpg')"></div>
           <div class="cardLabel">COSPLAY</div>
         </a>
@@ -69,39 +67,215 @@
         <div class="followRow">
           <div class="followText">FOLLOW ME FROM</div>
           <div class="social">
-            <a class="js-hover" href="https://www.facebook.com/sa.mi.24649">
-              <img src="0_IMG/fb.jpg" alt="Facebook" />
-            </a>
-            <a class="js-hover" href="https://www.instagram.com/nemin_q424">
-              <img src="0_IMG/ig.jpg" alt="Instagram" />
-            </a>
+            <a class="js-hover" href="https://www.facebook.com/sa.mi.24649" aria-label="Facebook"><img src="0_IMG/fb.jpg" alt="Facebook" /></a>
+            <a class="js-hover" href="https://www.instagram.com/nemin_q424?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" aria-label="Instagram"><img src="0_IMG/ig.jpg" alt="Instagram" /></a>
           </div>
         </div>
 
         <form id="contactForm">
           <div class="field">
             <div class="label">NAME</div>
-            <input class="input js-hover" name="name" placeholder="Your name" />
+            <input class="input js-hover" name="name" placeholder="Your name" autocomplete="name" />
           </div>
-
           <div class="field">
             <div class="label">NUMBER</div>
-            <input class="input js-hover" name="number" placeholder="Phone / Line / Any" />
+            <input class="input js-hover" name="number" placeholder="Phone / Line / Any" autocomplete="tel" />
           </div>
-
           <div class="field">
             <div class="label">SEND TO ME</div>
-            <input class="input js-hover" name="message" placeholder="Say something..." />
+            <input class="input js-hover" name="message" placeholder="Say something..." autocomplete="off" />
           </div>
 
-          <button class="submit js-hover">Send</button>
-          <div class="toast" id="toast"></div>
+          <div class="submitRow">
+            <button class="submit js-hover" type="submit">Send</button>
+          </div>
+          <div class="toast" id="toast" aria-live="polite"></div>
         </form>
       </div>
     </section>
   </main>
 
-  <!-- JS（放 body 最底，不阻塞渲染） -->
-  <script src="js/main.js"></script>
+  <script>
+    const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isCoarse = matchMedia('(pointer: coarse)').matches;
+
+    function smooth(current, target, dt, tau = 0.12){
+      const a = 1 - Math.exp(-dt / tau);
+      return current + (target - current) * a;
+    }
+    function centerOffset(panel){
+      const r = panel.getBoundingClientRect();
+      const vpC = innerHeight * 0.5;
+      const pC  = r.top + r.height * 0.5;
+      const denom = Math.max(1, r.height * 0.5);
+      return (pC - vpC) / denom;
+    }
+
+    /* ===== cursor (desktop only) ===== */
+    const cursor = document.getElementById('cursor');
+    if (isCoarse) cursor?.remove();
+
+    if (!isCoarse && cursor){
+      let cx = innerWidth/2, cy = innerHeight/2, tx = cx, ty = cy;
+      addEventListener('mousemove', (e)=>{
+        tx=e.clientX; ty=e.clientY;
+        cursor.classList.add('cursor--on');
+      }, {passive:true});
+
+      (function rafCursor(){
+        cx += (tx-cx)*0.18;
+        cy += (ty-cy)*0.18;
+        cursor.style.left = cx+'px';
+        cursor.style.top  = cy+'px';
+        requestAnimationFrame(rafCursor);
+      })();
+
+      const hoverSet = new Set([...document.querySelectorAll('a,button,input,.js-hover')]);
+      hoverSet.forEach(el=>{
+        el.addEventListener('mouseenter', ()=>cursor.classList.add('cursor--big'));
+        el.addEventListener('mouseleave', ()=>cursor.classList.remove('cursor--big'));
+      });
+
+      const follow = document.getElementById('follow');
+      if (follow){
+        new IntersectionObserver((entries)=>{
+          entries.forEach(e=>{
+            cursor.classList.toggle('cursor--blue', e.isIntersecting);
+          });
+        },{threshold:.25}).observe(follow);
+      }
+    }
+
+    /* ===== form demo ===== */
+    const form = document.getElementById('contactForm');
+    const toast = document.getElementById('toast');
+    if (form && toast){
+      form.addEventListener('submit',(e)=>{
+        e.preventDefault();
+        const fd = new FormData(form);
+        const name = (fd.get('name')||'').toString().trim();
+        toast.textContent = name ? `收到囉，${name} ✶（目前是前端展示版）` : '收到囉 ✶（目前是前端展示版）';
+        form.reset();
+        setTimeout(()=>toast.textContent='', 2200);
+      });
+    }
+
+    /* ===== grain (reuse buffer) ===== */
+    const g = document.getElementById('grain');
+    const ctx = g?.getContext?.('2d', {alpha:true});
+    let noise = { w:0, h:0, img:null, off:null, offctx:null };
+
+    function resizeGrain(){
+      if (!g || !ctx) return;
+      const dpr = Math.max(1, Math.min(2, devicePixelRatio || 1));
+      g.width  = Math.floor(innerWidth * dpr);
+      g.height = Math.floor(innerHeight * dpr);
+      g.style.width  = innerWidth + 'px';
+      g.style.height = innerHeight + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      const s = 2;
+      const nw = Math.ceil(innerWidth/s);
+      const nh = Math.ceil(innerHeight/s);
+      if (nw !== noise.w || nh !== noise.h){
+        noise.w = nw; noise.h = nh;
+        noise.img = ctx.createImageData(nw, nh);
+        noise.off = document.createElement('canvas');
+        noise.off.width = nw; noise.off.height = nh;
+        noise.offctx = noise.off.getContext('2d', {alpha:true});
+      }
+    }
+    resizeGrain();
+    addEventListener('resize', resizeGrain, {passive:true});
+
+    let lastGrain = 0;
+    function drawGrain(t){
+      if (!g || !ctx || reduced) return;
+      if (t - lastGrain > 90 && noise.img && noise.offctx){
+        lastGrain = t;
+        const d = noise.img.data;
+        for (let i=0;i<d.length;i+=4){
+          const v = (Math.random()*255)|0;
+          d[i]=v; d[i+1]=v; d[i+2]=v; d[i+3]=28;
+        }
+        noise.offctx.putImageData(noise.img,0,0);
+        ctx.clearRect(0,0,innerWidth,innerHeight);
+        ctx.imageSmoothingEnabled=false;
+        ctx.drawImage(noise.off, 0,0, noise.w,noise.h, 0,0, innerWidth,innerHeight);
+      }
+      requestAnimationFrame(drawGrain);
+    }
+    requestAnimationFrame(drawGrain);
+
+    /* ===== parallax ===== */
+    const heroPanel  = document.querySelector('.panel.workHero');
+    const worksPanel = document.querySelector('.panel.works');
+    const heroBg     = document.getElementById('workBg');
+    const cards      = Array.from(document.querySelectorAll('.card'));
+
+    const mqPhone  = matchMedia("(max-width: 600px)");
+    const mqTablet = matchMedia("(max-width: 1024px)");
+
+    let heroOcur = 1, heroYcur = 0;
+    const cardXcur = cards.map(()=>0);
+    const cardOcur = cards.map(()=>1);
+
+    function offscreenDistanceFor(card){
+      const w = card.getBoundingClientRect().width || 320;
+      return (innerWidth * 0.5) + (w * 0.5) + 120;
+    }
+
+    let lastT = performance.now();
+    function raf(t){
+      const dt = Math.min(0.05, (t - lastT) / 1000);
+      lastT = t;
+
+      if (!reduced && heroPanel && heroBg){
+        const off1 = centerOffset(heroPanel);
+        const a1 = clamp(Math.abs(off1), 0, 1);
+        heroOcur = smooth(heroOcur, 0.12 + (1-a1)*0.88, dt, 0.12);
+        heroYcur = smooth(heroYcur, (-off1)*70, dt, 0.12);
+        heroBg.style.opacity = heroOcur.toFixed(3);
+        heroBg.style.transform = `translate3d(0, ${heroYcur.toFixed(2)}px, 0) scale(1.06)`;
+      }
+
+      if (worksPanel && cards.length){
+        const off2 = centerOffset(worksPanel);
+        const a2 = clamp(Math.abs(off2), 0, 1);
+        const isPhone  = mqPhone.matches;
+        const isTablet = mqTablet.matches && !isPhone;
+
+        cards.forEach((card, i)=>{
+          if (reduced){
+            card.style.transform = "";
+            card.style.opacity = "";
+            return;
+          }
+          const dir = parseFloat(card.getAttribute('data-dir') || (i%2?1:-1));
+
+          // If we're in grid layout (tablet/phone), do NOT translate cards
+          // because translate would cause perceived clipping/overflow and is not needed.
+          if (isTablet || isPhone){
+            card.style.transform = "";
+            card.style.opacity = "";
+            return;
+          }
+
+          let maxOut = offscreenDistanceFor(card);
+          const xT = dir * a2 * maxOut;
+          const oT = 0.35 + (1 - a2) * 0.65;
+
+          cardXcur[i] = smooth(cardXcur[i], xT, dt, 0.10);
+          cardOcur[i] = smooth(cardOcur[i], oT, dt, 0.12);
+          card.style.transform = `translate3d(${cardXcur[i].toFixed(2)}px, 0, 0)`;
+          card.style.opacity = cardOcur[i].toFixed(3);
+        });
+      }
+
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+  </script>
 </body>
 </html>
