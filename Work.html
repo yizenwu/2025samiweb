@@ -1,0 +1,1150 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="description" content="作品集：依分類展示作品，支援散佈排版、入場動畫與滾動視差。" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>MyWeb — Work</title>
+
+  <style>
+    :root{
+      --ink:#0b0b0b;
+      --blue:#3252A2;
+      --paper:#ffffff;
+      --shadow: 0 24px 70px rgba(0,0,0,.18);
+      --radius: 26px;
+
+      /* header height per breakpoint */
+      --hdrH: 72px;
+
+      /* safe-area */
+      --sat: env(safe-area-inset-top, 0px);
+      --sar: env(safe-area-inset-right, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --sal: env(safe-area-inset-left, 0px);
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial, sans-serif;
+      color:var(--ink);
+      background:var(--paper);
+      overflow-x:hidden;
+      -webkit-text-size-adjust: 100%;
+      text-rendering: geometricPrecision;
+      touch-action: manipulation;
+    }
+
+    .vignette{
+      pointer-events:none;
+      position:fixed; inset:-40px;
+      background:
+        radial-gradient(1200px 600px at 70% 20%, rgba(0,0,0,.10), transparent 55%),
+        radial-gradient(900px 700px at 25% 85%, rgba(0,0,0,.12), transparent 60%);
+      mix-blend-mode:multiply;
+      opacity:.55;
+      z-index:5;
+    }
+    canvas#grain{
+      pointer-events:none;
+      position:fixed; inset:0;
+      opacity:.18;
+      mix-blend-mode:overlay;
+      z-index:6;
+    }
+
+    /* custom cursor only on fine pointers (JS also removes on coarse) */
+    .cursor{
+      position:fixed; left:0; top:0;
+      width:18px; height:18px;
+      border-radius:999px;
+      background:rgba(0,0,0,.9);
+      transform:translate(-50%,-50%);
+      z-index:9999;
+      pointer-events:none;
+      transition: width .18s ease, height .18s ease, background .18s ease, opacity .2s ease;
+      opacity:0;
+    }
+    .cursor--on{ opacity:1; }
+    .cursor--big{
+      width:56px; height:56px;
+      background:rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.35);
+      backdrop-filter: blur(10px);
+    }
+
+    header{
+      position:fixed;
+      top:0; left:0; right:0;
+      z-index:50;
+      background:rgba(255,255,255,.72);
+      backdrop-filter: blur(12px);
+      border-bottom:1px solid rgba(0,0,0,.08);
+      padding-top: var(--sat);
+      padding-left: var(--sal);
+      padding-right: var(--sar);
+    }
+
+    .topbar{
+      max-width:1200px;
+      margin:0 auto;
+      padding:14px 18px;
+      min-height: var(--hdrH);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+    }
+
+    .brand{
+      display:inline-flex;
+      align-items:center;
+      min-width: 92px;
+      flex: 0 0 auto;
+    }
+    .brand img{
+      width:78px; height:44px;
+      object-fit:cover;
+      border-radius:12px;
+      box-shadow:0 10px 28px rgba(0,0,0,.12);
+      border:1px solid rgba(0,0,0,.08);
+    }
+
+    nav{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      font-weight:800;
+      letter-spacing:.06em;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .navlink{
+      position:relative;
+      color:var(--blue);
+      text-decoration:none;
+      padding:10px 6px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border-radius: 12px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .navlink::after{
+      content:"";
+      position:absolute; left:6px; right:6px; bottom:6px;
+      height:2px; background:currentColor;
+      transform:scaleX(0);
+      transform-origin:left;
+      transition:transform .25s ease;
+      opacity:.9;
+    }
+    .navlink:hover::after{ transform:scaleX(1); }
+    .navlink.is-active{ color:#111; }
+    .navlink.is-active::after{ transform:scaleX(1); }
+    .navlink:active{ transform: translateY(1px); }
+
+    main{ padding-top: calc(var(--hdrH) + var(--sat)); }
+
+    .panel{
+      height: calc(100svh - (var(--hdrH) + var(--sat)));
+      min-height: 560px;
+      position:relative;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      isolation:isolate;
+      padding-left: var(--sal);
+      padding-right: var(--sar);
+    }
+
+    .workHero{ background:#f5f5f5; }
+    .workHeroFrame{
+      width:min(1200px, 92vw);
+      height:min(680px, calc(100% - 46px));
+      border-radius: calc(var(--radius) + 10px);
+      overflow:hidden;
+      box-shadow: var(--shadow);
+      border:1px solid rgba(0,0,0,.08);
+      position:relative;
+      background:#ddd;
+    }
+    .workBg{
+      position:absolute; inset:-80px;
+      background-image:url("2_WorkIMG/MainCard.jpg");
+      background-size:cover;
+      background-position:center;
+      transform: translate3d(0, var(--wby, 0px), 0) scale(1.06);
+      opacity: var(--wbo, 1);
+      will-change: transform, opacity;
+      filter: saturate(1.06) contrast(1.06);
+    }
+    .workBg::after{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(980px 520px at 28% 38%, rgba(255,255,255,.16), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18));
+      mix-blend-mode:overlay;
+    }
+    .workInk{
+      position:absolute; inset:0;
+      background: repeating-linear-gradient(135deg, rgba(0,0,0,.06) 0 1px, transparent 1px 10px);
+      opacity:.14;
+      mix-blend-mode:multiply;
+      pointer-events:none;
+      z-index:2;
+    }
+
+    .workTitleWrap{
+      position:absolute;
+      left: clamp(14px, 4vw, 42px);
+      bottom: clamp(14px, 4vw, 34px);
+      z-index:3;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      max-width:min(900px, 92%);
+    }
+    .workTitle{
+      font-weight:950;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size: clamp(34px, 6.5vw, 86px);
+      color: rgba(255,255,255,.92);
+      text-shadow: 0 22px 70px rgba(0,0,0,.45);
+      line-height:1.02;
+    }
+
+    .catBar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      max-width: 100%;
+    }
+    .catBtn{
+      cursor:pointer;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.30);
+      background: rgba(255,255,255,.14);
+      color: rgba(255,255,255,.92);
+      font-weight:900;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      padding:10px 14px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.20);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .catBtn:hover{ transform: translateY(-2px); background: rgba(255,255,255,.18); }
+    .catBtn:active{ transform: translateY(1px) scale(.99); }
+    .catBtn.is-active{
+      background: rgba(255,255,255,.30);
+      border-color: rgba(255,255,255,.55);
+      color:#0b0b0b;
+    }
+
+    /* gallery */
+    .gallery{
+      height:auto;
+      min-height: calc(100svh - (var(--hdrH) + var(--sat)));
+      padding: clamp(18px, 3vw, 34px) var(--sar) clamp(90px, 10vh, 120px) var(--sal);
+      overflow: visible;
+      background: rgb(var(--g,0) var(--g,0) var(--g,0));
+      transition: background-color .12s linear;
+    }
+    .galleryWrap{ width:min(1200px, 92vw); margin: 0 auto; position:relative; }
+    .galleryStage{
+      position:relative;
+      min-height: 1200px;
+      background: transparent;
+      border: 0;
+      box-shadow:none;
+      border-radius:0;
+      overflow: visible;
+      isolation:isolate;
+    }
+
+    .piece{
+      position:absolute;
+      z-index:2;
+      border-radius: 18px;
+      overflow:hidden;
+      box-shadow: 0 22px 70px rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.08);
+      background:#111;
+      opacity: 0;
+      filter: blur(12px);
+      transform: translate3d(var(--enterX, 180px), 18px, 0) rotate(var(--rot,0deg));
+      transition:
+        transform .85s cubic-bezier(.18,.9,.18,1),
+        opacity .65s ease,
+        filter .65s ease;
+      will-change: transform, opacity, filter;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .piece.inview{
+      opacity: 1;
+      filter: blur(0px);
+      transform: translate3d(0px, 0px, 0) rotate(var(--rot,0deg));
+    }
+    .piece.leaving{
+      opacity: 0 !important;
+      filter: blur(14px) !important;
+      transform: translate3d(var(--exitX, -240px), -10px, 0) rotate(var(--rot,0deg)) !important;
+      transition:
+        transform .55s cubic-bezier(.18,.9,.18,1),
+        opacity .45s ease,
+        filter .45s ease;
+    }
+
+    .piece img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      transform: scale(1.08);
+      transition: transform .45s ease, filter .45s ease;
+      filter: saturate(1.06) contrast(1.06);
+    }
+    .piece:hover img{ transform: scale(1.02); filter: saturate(1.14) contrast(1.10); }
+
+    .pieceTag{
+      position:absolute;
+      right:12px; top:12px;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.22);
+      backdrop-filter: blur(10px);
+      color:#fff;
+      text-shadow: 0 14px 40px rgba(0,0,0,.35);
+      z-index:3;
+      pointer-events:none;
+    }
+
+    /* animation: centered video */
+    .galleryStage.is-video{
+      min-height: calc(100svh - (var(--hdrH) + var(--sat)));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 6px 0;
+    }
+    .piece.piece--video{
+      position:relative;
+      width: min(960px, 92vw);
+      aspect-ratio: 16/9;
+      height:auto;
+      border-radius: 18px;
+      overflow:hidden;
+      box-shadow: 0 22px 70px rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.12);
+      background:#0b0b0b;
+      opacity:1;
+      filter:none;
+      transform:none;
+    }
+    .piece.piece--video video{
+      width:100%;
+      height:100%;
+      display:block;
+      object-fit:cover;
+      background:#000;
+    }
+    .hintUnmute{
+      position:absolute;
+      left:12px; bottom:12px;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.22);
+      backdrop-filter: blur(10px);
+      color:#fff;
+      text-shadow: 0 14px 40px rgba(0,0,0,.35);
+      z-index:4;
+      opacity:.9;
+      pointer-events:none;
+    }
+
+    /* FOLLOW */
+    .followPanel{
+      height: calc(100svh - (var(--hdrH) + var(--sat)));
+      min-height: 560px;
+      background: var(--blue);
+      color:#fff;
+      position:relative;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      isolation:isolate;
+      padding-left: var(--sal);
+      padding-right: var(--sar);
+      padding-bottom: var(--sab);
+    }
+    .followPanel::before{
+      content:"";
+      position:absolute; inset:-90px;
+      background:
+        radial-gradient(900px 520px at 30% 40%, rgba(255,255,255,.12), transparent 60%),
+        radial-gradient(700px 560px at 80% 80%, rgba(0,0,0,.26), transparent 60%);
+      pointer-events:none;
+      opacity:1;
+    }
+    .followWrap{
+      width:min(1200px, 92vw);
+      height:min(680px, calc(100% - 46px));
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:22px;
+      position:relative;
+      z-index:2;
+    }
+    .followRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+    .followText{
+      font-weight:950;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      font-size: clamp(18px, 3.0vw, 40px);
+      opacity:.95;
+    }
+    .social{ display:flex; gap:12px; align-items:center; }
+    .social a{
+      width:52px; height:52px;
+      border-radius:16px;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.22);
+      display:grid; place-items:center;
+      box-shadow: 0 18px 40px rgba(0,0,0,.25);
+      transition: transform .18s ease, background .18s ease;
+      text-decoration:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .social a:hover{ transform: translateY(-2px) scale(1.02); background: rgba(255,255,255,.16); }
+    .social a:active{ transform: translateY(1px) scale(.99); }
+    .social img{ width:30px; height:30px; object-fit:cover; border-radius:10px; }
+
+    form{ max-width:780px; width:100%; margin:0; }
+    .field{ margin: 12px 0 18px; }
+    .label{
+      font-weight:950;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      font-size: clamp(18px, 3.0vw, 46px);
+      margin: 0 0 10px;
+      opacity:.95;
+    }
+    .input{
+      width:100%;
+      padding: 16px 18px;
+      border-radius: 16px;
+      border: 2px solid rgba(255,255,255,.86);
+      background: rgba(120, 114, 255, .52);
+      color:#fff;
+      font-size:16px;
+      outline:none;
+      box-shadow: 0 18px 42px rgba(0,0,0,.28);
+    }
+    .submitRow{ display:flex; justify-content:flex-start; padding-top: 6px; }
+    .submit{
+      cursor:pointer;
+      font-weight:950;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      border-radius:999px;
+      padding: 14px 18px;
+      border: 1px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.12);
+      color:#fff;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 22px 60px rgba(0,0,0,.28);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .submit:active{ transform: translateY(1px) scale(.99); }
+    .toast{ margin-top: 10px; font-weight:800; opacity:.9; min-height: 22px; }
+
+    /* =========================
+       Responsive improvements
+       ========================= */
+
+    /* 1) Tablets / small laptops */
+    @media (max-width: 1024px){
+      :root{ --hdrH: 76px; }
+
+      .galleryStage{
+        min-height:0;
+        padding:18px 0;
+        column-count:2;
+        column-gap:12px;
+      }
+      .galleryStage.is-video{
+        column-count:1;
+        display:block;
+        padding: 10px 0;
+      }
+
+      .piece{
+        position:relative;
+        width:100% !important;
+        height:auto !important;
+        margin:0 0 12px;
+        display:inline-block;
+        border:1px solid rgba(0,0,0,.10);
+      }
+      .piece img{
+        width:100%;
+        height:auto;
+        aspect-ratio: 4/3;
+        object-fit:cover;
+      }
+      .pieceTag{ right:10px; top:10px; }
+
+      .piece.piece--video{
+        width:100% !important;
+        margin: 0 auto;
+        aspect-ratio: 16/9;
+      }
+      .followWrap{
+        height:auto;
+        padding: 14px 0;
+      }
+      .followPanel{
+        min-height: 620px;
+        height:auto;
+        padding-top: 22px;
+        padding-bottom: calc(22px + var(--sab));
+      }
+    }
+
+    /* 2) Mid phones / portrait tablets: header can wrap to 2 lines */
+    @media (max-width: 860px){
+      :root{ --hdrH: 98px; } /* allow wrapped nav */
+      .topbar{
+        padding: 12px 16px;
+        align-items:flex-start;
+        flex-wrap:wrap;
+        gap:12px;
+      }
+      nav{
+        width:100%;
+        justify-content:flex-start;
+        gap:10px 14px;
+      }
+      .navlink{ padding:8px 6px; }
+      .brand img{ width:74px; height:42px; }
+      .workHeroFrame{
+        width: min(1200px, 94vw);
+        height: min(640px, calc(100% - 34px));
+      }
+      .workTitleWrap{ max-width: 96%; }
+    }
+
+    /* 3) Phones */
+    @media (max-width: 600px){
+      :root{ --hdrH: 104px; }
+      .galleryWrap{ width:min(1200px, 94vw); }
+      .galleryStage{ column-count:1; }
+      .workHeroFrame{
+        width: min(1200px, 94vw);
+        height: min(620px, calc(100% - 28px));
+        border-radius: calc(var(--radius) + 6px);
+      }
+      .workTitle{
+        font-size: clamp(30px, 9vw, 56px);
+        letter-spacing:.05em;
+      }
+      .catBtn{
+        padding: 10px 12px;
+        letter-spacing:.10em;
+        font-size: 12px;
+      }
+      .catBar{ gap:8px; }
+      .followRow{ gap:12px; }
+      .social a{ width:48px; height:48px; border-radius:14px; }
+      .social img{ width:28px; height:28px; }
+      .input{ font-size:16px; } /* keep 16 to avoid iOS zoom */
+      .pieceTag{ font-size:11px; padding:7px 9px; }
+      .hintUnmute{ font-size:11px; }
+    }
+
+    /* 4) Very small phones */
+    @media (max-width: 420px){
+      :root{ --hdrH: 112px; }
+      nav{ gap:8px 10px; }
+      .navlink{ font-size: 14px; }
+      .brand img{ width:70px; height:40px; }
+      .catBtn{ width: fit-content; }
+      .followText{ letter-spacing:.10em; }
+    }
+
+    /* Touch devices: remove hover exaggeration & keep tap smooth */
+    @media (hover: none) and (pointer: coarse){
+      .piece:hover img{ transform: scale(1.06); filter: saturate(1.06) contrast(1.06); }
+      .catBtn:hover{ transform:none; }
+      .social a:hover{ transform:none; }
+      .navlink:hover::after{ transform:scaleX(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      html{ scroll-behavior:auto; }
+      .piece{ transition:none !important; opacity:1; filter:none; transform:none; }
+      .piece.leaving{ transition:none !important; }
+      .workBg{ transform:none !important; opacity:1 !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="cursor" id="cursor" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+  <canvas id="grain" aria-hidden="true"></canvas>
+
+  <header>
+    <div class="topbar">
+      <a class="js-hover brand" href="index.html" aria-label="Home">
+       
+      </a>
+
+      <nav aria-label="Primary">
+        <a class="navlink js-hover" href="index.html">主頁</a>
+        <a class="navlink js-hover is-active" href="work.html" aria-current="page">作品集</a>
+        <a class="navlink js-hover" href="about.html">關於我</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel workHero" id="top">
+      <div class="workHeroFrame">
+        <div class="workBg" id="workBg"></div>
+        <div class="workInk" aria-hidden="true"></div>
+        <div class="workTitleWrap">
+          <div class="workTitle">PORTFOLIO</div>
+          <div class="catBar" role="tablist" aria-label="Categories">
+            <button class="catBtn js-hover" data-cat="paint" role="tab">PAINT</button>
+            <button class="catBtn js-hover" data-cat="animation" role="tab">ANIMATION</button>
+            <button class="catBtn js-hover" data-cat="cosplay" role="tab">COSPLAY</button>
+            <button class="catBtn js-hover" data-cat="comic" role="tab">COMIC</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="gallery" id="gallery">
+      <div class="galleryWrap">
+        <div class="galleryStage" id="galleryStage" aria-label="Works gallery"></div>
+      </div>
+    </section>
+
+    <section class="followPanel" id="follow">
+      <div class="followWrap">
+        <div class="followRow">
+          <div class="followText">FOLLOW ME FROM</div>
+          <div class="social">
+            <a class="js-hover" href="https://www.facebook.com/sa.mi.24649" aria-label="Facebook"><img src="0_IMG/fb.jpg" alt="Facebook" /></a>
+            <a class="js-hover" href="https://www.instagram.com/nemin_q424?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" aria-label="Instagram"><img src="0_IMG/ig.jpg" alt="Instagram" /></a>
+          </div>
+        </div>
+
+        <form id="contactForm">
+          <div class="field">
+            <div class="label">NAME</div>
+            <input class="input js-hover" name="name" placeholder="Your name" autocomplete="name" />
+          </div>
+          <div class="field">
+            <div class="label">NUMBER</div>
+            <input class="input js-hover" name="number" placeholder="Phone / Line / Any" autocomplete="tel" />
+          </div>
+          <div class="field">
+            <div class="label">SEND TO ME</div>
+            <input class="input js-hover" name="message" placeholder="Say something..." autocomplete="off" />
+          </div>
+          <div class="submitRow">
+            <button class="submit js-hover" type="submit">Send</button>
+          </div>
+          <div class="toast" id="toast" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+    const lerp  = (a,b,t)=>a+(b-a)*t;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isCoarse = matchMedia('(pointer: coarse)').matches;
+
+    function centerOffset(panel){
+      const r = panel.getBoundingClientRect();
+      const vpC = innerHeight * 0.5;
+      const pC  = r.top + r.height * 0.5;
+      const denom = Math.max(1, r.height * 0.5);
+      return (pC - vpC) / denom;
+    }
+
+    /* cursor */
+    const cursor = document.getElementById('cursor');
+    if (isCoarse) cursor?.remove();
+    if (!isCoarse && cursor){
+      let cx=innerWidth/2, cy=innerHeight/2, tx=cx, ty=cy;
+      addEventListener('mousemove',(e)=>{ tx=e.clientX; ty=e.clientY; cursor.classList.add('cursor--on'); }, {passive:true});
+      (function rafCursor(){
+        cx += (tx-cx)*0.18; cy += (ty-cy)*0.18;
+        cursor.style.left=cx+'px'; cursor.style.top=cy+'px';
+        requestAnimationFrame(rafCursor);
+      })();
+      document.querySelectorAll('.js-hover, a, button, input').forEach(el=>{
+        el.addEventListener('mouseenter', ()=>cursor.classList.add('cursor--big'));
+        el.addEventListener('mouseleave', ()=>cursor.classList.remove('cursor--big'));
+      });
+    }
+
+    /* form demo */
+    const form = document.getElementById('contactForm');
+    const toast = document.getElementById('toast');
+    if (form && toast){
+      form.addEventListener('submit',(e)=>{
+        e.preventDefault();
+        const fd = new FormData(form);
+        const name = (fd.get('name')||'').toString().trim();
+        toast.textContent = name ? `收到囉，${name} ✶（目前是前端展示版）` : '收到囉 ✶（目前是前端展示版）';
+        form.reset();
+        setTimeout(()=>toast.textContent='', 2200);
+      });
+    }
+
+    /* grain (reuse buffer) */
+    const g = document.getElementById('grain');
+    const ctx = g?.getContext?.('2d', {alpha:true});
+    let noise = { w:0, h:0, img:null, off:null, offctx:null };
+
+    function resizeGrain(){
+      if (!g || !ctx) return;
+      const dpr = Math.max(1, Math.min(2, devicePixelRatio||1));
+      g.width=Math.floor(innerWidth*dpr);
+      g.height=Math.floor(innerHeight*dpr);
+      g.style.width=innerWidth+'px';
+      g.style.height=innerHeight+'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      const s=2;
+      const nw=Math.ceil(innerWidth/s);
+      const nh=Math.ceil(innerHeight/s);
+      if(nw!==noise.w || nh!==noise.h){
+        noise.w=nw; noise.h=nh;
+        noise.img=ctx.createImageData(nw,nh);
+        noise.off=document.createElement('canvas');
+        noise.off.width=nw; noise.off.height=nh;
+        noise.offctx=noise.off.getContext('2d', {alpha:true});
+      }
+    }
+    resizeGrain();
+    addEventListener('resize', resizeGrain, {passive:true});
+
+    let last=0;
+    function drawGrain(t){
+      if(!g || !ctx || reduced) return;
+      if(t-last>90 && noise.img && noise.offctx){
+        last=t;
+        const d=noise.img.data;
+        for(let i=0;i<d.length;i+=4){
+          const v=(Math.random()*255)|0;
+          d[i]=v; d[i+1]=v; d[i+2]=v; d[i+3]=28;
+        }
+        noise.offctx.putImageData(noise.img,0,0);
+        ctx.clearRect(0,0,innerWidth,innerHeight);
+        ctx.imageSmoothingEnabled=false;
+        ctx.drawImage(noise.off,0,0,noise.w,noise.h,0,0,innerWidth,innerHeight);
+      }
+      requestAnimationFrame(drawGrain);
+    }
+    requestAnimationFrame(drawGrain);
+
+    /* hero parallax */
+    const workHero = document.querySelector('.panel.workHero');
+    const workBg = document.getElementById('workBg');
+    let wby=0, wbo=1;
+
+    /* gallery */
+    const gallery = document.getElementById('gallery');
+    const stage = document.getElementById('galleryStage');
+    const btns = Array.from(document.querySelectorAll('.catBtn'));
+
+    const CATS = ["paint","animation","cosplay","comic"];
+
+    let MANIFEST = null;
+    async function loadManifest(){
+      try{
+        const res = await fetch("2_WorkIMG/manifest.json", {cache:"no-store"});
+        if(!res.ok) throw new Error("manifest load failed");
+        MANIFEST = await res.json();
+      }catch(err){
+        console.warn("manifest.json 讀取失敗（若你用 file:/// 開檔也會失敗，建議用 Live Server）：", err);
+        MANIFEST = null;
+      }
+    }
+
+    function getInitialCat(){
+      const h = (location.hash || "").replace("#","").toLowerCase();
+      return CATS.includes(h) ? h : "paint";
+    }
+
+    function isMobileLayout(){
+      return matchMedia("(max-width: 1024px)").matches;
+    }
+
+    let io=null;
+    function setupObserver(){
+      if (reduced){
+        stage.querySelectorAll('.piece').forEach(p=>p.classList.add('inview'));
+        return;
+      }
+      if(io) io.disconnect();
+      io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{
+          e.target.classList.toggle('inview', e.isIntersecting);
+        });
+      }, {threshold:0.18});
+      stage.querySelectorAll('.piece').forEach(p=>io.observe(p));
+    }
+
+    function waitForImgs(imgEls){
+      const ps = imgEls.map(img=>{
+        if (img.decode){
+          return img.decode().catch(()=>null);
+        }
+        return new Promise(res=>{
+          if (img.complete) return res();
+          img.addEventListener('load', res, {once:true});
+          img.addEventListener('error', res, {once:true});
+        });
+      });
+      return Promise.all(ps);
+    }
+
+    function scatterNoOverlap(items){
+      const W = stage.clientWidth;
+      const PADDING = 10;
+      const GAP = 16;
+
+      const minW = 260, maxW = 460;
+      const minH = 220, maxH = 540;
+
+      const boxes = [];
+      let stageH = 980;
+
+      for (let i=0;i<items.length;i++){
+        const el = items[i];
+        const ratio = parseFloat(el.dataset.ratio || "1.333") || 1.333;
+
+        let w = lerp(minW, maxW, Math.random());
+        let h = w / ratio;
+
+        if (h < minH){
+          h = minH;
+          w = h * ratio;
+        } else if (h > maxH){
+          h = maxH;
+          w = h * ratio;
+        }
+
+        const maxFitW = Math.max(120, W - PADDING*2);
+        if (w > maxFitW){
+          w = maxFitW;
+          h = w / ratio;
+        }
+
+        w = Math.max(140, Math.min(maxFitW, w));
+        h = Math.max(160, h);
+
+        let placed=false, tries=0;
+        while(!placed && tries<900){
+          tries++;
+          if(tries%220===0) stageH += 180;
+
+          const x = PADDING + Math.random()*(W - PADDING*2 - w);
+          const y = PADDING + Math.random()*(stageH - PADDING*2 - h);
+          const rect = {x,y,w,h};
+
+          const ok = boxes.every(b =>
+            rect.x + rect.w + GAP < b.x ||
+            rect.x > b.x + b.w + GAP ||
+            rect.y + rect.h + GAP < b.y ||
+            rect.y > b.y + b.h + GAP
+          );
+
+          if(ok){
+            boxes.push(rect);
+            el.style.left = rect.x+"px";
+            el.style.top  = rect.y+"px";
+            el.style.width  = rect.w+"px";
+            el.style.height = rect.h+"px";
+            placed=true;
+          }
+        }
+
+        if(!placed){
+          const y = PADDING + i*(h+18);
+          boxes.push({x:PADDING,y,w,h});
+          el.style.left = PADDING+"px";
+          el.style.top  = y+"px";
+          el.style.width  = w+"px";
+          el.style.height = h+"px";
+          stageH = Math.max(stageH, y+h+PADDING);
+        }
+      }
+
+      const maxBottom = boxes.reduce((m,b)=>Math.max(m, b.y+b.h), 0);
+      stage.style.minHeight = (maxBottom + 40) + "px";
+    }
+
+    function setActiveCat(cat){
+      btns.forEach(b=>b.classList.toggle("is-active", b.dataset.cat===cat));
+      history.replaceState(null, "", `#${cat}`);
+    }
+
+    function getSourcesForCat(cat){
+      if (cat !== "animation"){
+        const list = Array.isArray(MANIFEST?.[cat]) ? MANIFEST[cat] : [];
+        if (list.length) return list;
+        const fallbackCount = 7;
+        return Array.from({length: fallbackCount}, (_,i)=>`2_WorkIMG/${cat}/${i+1}.jpg`);
+      }
+      return [];
+    }
+
+    async function buildPieces(cat, {forceReveal=false} = {}){
+      stage.innerHTML = "";
+      stage.classList.remove("is-video");
+      stage.style.minHeight = "0px";
+
+      if(cat === "animation"){
+        stage.classList.add("is-video");
+
+        const info = MANIFEST?.animation;
+        const videoSrc = typeof info === "string" ? info : info?.video;
+        const poster  = (typeof info === "object" && info?.poster) ? info.poster : "";
+        const finalVideoSrc = videoSrc || "2_WorkIMG/animation/main.mp4";
+
+        const wrap = document.createElement("div");
+        wrap.className = "piece piece--video";
+
+        const video = document.createElement("video");
+        video.src = finalVideoSrc;
+        if (poster) video.poster = poster;
+        video.controls = true;
+        video.playsInline = true;
+        video.preload = "metadata";
+        video.muted = true;
+
+        const tag = document.createElement("div");
+        tag.className = "pieceTag";
+        tag.textContent = "animation";
+
+        const hint = document.createElement("div");
+        hint.className = "hintUnmute";
+        hint.textContent = "tap to unmute";
+
+        wrap.appendChild(video);
+        wrap.appendChild(tag);
+        wrap.appendChild(hint);
+        stage.appendChild(wrap);
+
+        wrap.addEventListener("click", ()=>{
+          video.muted = !video.muted;
+          hint.style.opacity = video.muted ? ".9" : "0";
+        });
+
+        return;
+      }
+
+      const sources = getSourcesForCat(cat);
+
+      for (let i=0;i<sources.length;i++){
+        const src = sources[i];
+
+        const piece = document.createElement("a");
+        piece.className = "piece";
+        piece.href = "#";
+        piece.setAttribute("aria-label", `${cat} work ${i+1}`);
+
+        const side = ((i+1) % 2 === 0) ? 1 : -1;
+        piece.style.setProperty("--enterX", (side * 200) + "px");
+        piece.style.setProperty("--rot", ((Math.random()*6)-3).toFixed(2) + "deg");
+
+        const img = document.createElement("img");
+        img.loading = "lazy";
+        img.src = src;
+        img.alt = `${cat} ${i+1}`;
+
+        const tag = document.createElement("div");
+        tag.className = "pieceTag";
+        tag.textContent = cat;
+
+        piece.appendChild(img);
+        piece.appendChild(tag);
+        stage.appendChild(piece);
+      }
+
+      if (isMobileLayout()){
+        stage.querySelectorAll(".piece").forEach(p=>{
+          p.style.position="relative";
+          p.style.left="auto";
+          p.style.top="auto";
+          p.style.width="100%";
+          p.style.height="auto";
+        });
+        setupObserver();
+
+        if (forceReveal && !reduced){
+          const pcs = Array.from(stage.querySelectorAll(".piece"));
+          pcs.forEach((p, idx)=>setTimeout(()=>p.classList.add("inview"), 30 + idx*32));
+        }
+        return;
+      }
+
+      const imgs = Array.from(stage.querySelectorAll("img"));
+      await waitForImgs(imgs);
+
+      const pieces = Array.from(stage.querySelectorAll(".piece"));
+      pieces.forEach((p, idx)=>{
+        const img = imgs[idx];
+        const nw = img?.naturalWidth || 4;
+        const nh = img?.naturalHeight || 3;
+        const ratio = clamp(nw/nh, 0.55, 2.2);
+        p.dataset.ratio = ratio.toFixed(4);
+        p.style.position = "absolute";
+      });
+
+      scatterNoOverlap(pieces);
+      setupObserver();
+
+      if (forceReveal && !reduced){
+        pieces.forEach((p, idx)=>{
+          setTimeout(()=>p.classList.add("inview"), 40 + idx*34);
+        });
+      }
+    }
+
+    function scrollToGallery(){
+      gallery.scrollIntoView({behavior:"smooth", block:"start"});
+    }
+
+    async function tryAutoplayAnimation(){
+      const v = stage.querySelector("video");
+      if(!v) return;
+      try{ v.currentTime = 0; }catch(e){}
+      try{
+        const p = v.play();
+        if (p && p.then) await p;
+      }catch(err){
+        console.warn("Autoplay blocked (ok):", err);
+      }
+    }
+
+    let switching = false;
+    async function switchCat(cat){
+      if (switching) return;
+      switching = true;
+
+      setActiveCat(cat);
+
+      const old = Array.from(stage.querySelectorAll(".piece"));
+      if (old.length && !reduced){
+        old.forEach((p, idx)=>{
+          const dir = (idx % 2 === 0) ? -1 : 1;
+          p.classList.remove("inview");
+          p.style.setProperty("--exitX", (dir * 260) + "px");
+          p.classList.add("leaving");
+        });
+        await new Promise(r=>setTimeout(r, 280));
+      }
+
+      await buildPieces(cat, {forceReveal:true});
+      scrollToGallery();
+
+      if (cat === "animation"){
+        setTimeout(()=>{ tryAutoplayAnimation(); }, 520);
+      }
+
+      switching = false;
+    }
+
+    btns.forEach(btn=>{
+      btn.addEventListener("click", ()=>switchCat(btn.dataset.cat));
+    });
+
+    (async ()=>{
+      await loadManifest();
+      const initCat = getInitialCat();
+      setActiveCat(initCat);
+      await buildPieces(initCat, {forceReveal:true});
+
+      if (initCat === "animation"){
+        setTimeout(()=>{ scrollToGallery(); setTimeout(tryAutoplayAnimation, 520); }, 120);
+      }
+    })();
+
+    let rto=null;
+    addEventListener("resize", ()=>{
+      clearTimeout(rto);
+      rto=setTimeout(async ()=>{
+        const cat = getInitialCat();
+        await buildPieces(cat, {forceReveal:false});
+      }, 180);
+    }, {passive:true});
+
+    let gCur = 0;
+    function galleryOutsideAmount(section){
+      const r = section.getBoundingClientRect();
+      const vpC = innerHeight * 0.5;
+      let d=0;
+      if(vpC < r.top) d = r.top - vpC;
+      else if(vpC > r.bottom) d = vpC - r.bottom;
+      const fadeRange = innerHeight * 0.70;
+      return clamp(d / fadeRange, 0, 1);
+    }
+
+    function tick(){
+      const off = centerOffset(workHero);
+      const a = clamp(Math.abs(off), 0, 1);
+      wbo = lerp(wbo, 1 - a*0.55, 0.10);
+      wby = lerp(wby, (-off)*70, 0.10);
+      workBg.style.setProperty("--wbo", wbo.toFixed(3));
+      workBg.style.setProperty("--wby", wby.toFixed(2) + "px");
+
+      const outA = galleryOutsideAmount(gallery);
+      const targetG = Math.round(lerp(0, 255, outA));
+      gCur = lerp(gCur, targetG, 0.12);
+      gallery.style.setProperty("--g", gCur.toFixed(1));
+
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>

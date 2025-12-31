@@ -1,0 +1,47 @@
+{
+  "paint": [
+    "2_WorkIMG/paint/1.jpg",
+    "2_WorkIMG/paint/2.jpg",
+    "2_WorkIMG/paint/3.jpg",
+    "2_WorkIMG/paint/4.jpg",
+    "2_WorkIMG/paint/5.jpg",
+    "2_WorkIMG/paint/6.jpg",
+    "2_WorkIMG/paint/7.jpg",
+    "2_WorkIMG/paint/8.jpg",
+    "2_WorkIMG/paint/9.jpg",
+    "2_WorkIMG/paint/10.jpg",
+    "2_WorkIMG/paint/11.jpg",
+    "2_WorkIMG/paint/12.jpg"
+  ],
+  "cosplay": [
+    "2_WorkIMG/cosplay/1.jpg",
+    "2_WorkIMG/cosplay/2.jpg",
+    "2_WorkIMG/cosplay/3.jpg",
+    "2_WorkIMG/cosplay/4.jpg",
+    "2_WorkIMG/cosplay/5.jpg",
+    "2_WorkIMG/cosplay/6.jpg",
+    "2_WorkIMG/cosplay/7.jpg"
+  ],
+  "comic": [
+    "2_WorkIMG/comic/1.jpg",
+    "2_WorkIMG/comic/2.jpg",
+    "2_WorkIMG/comic/3.jpg",
+    "2_WorkIMG/comic/4.jpg",
+    "2_WorkIMG/comic/5.jpg",
+    "2_WorkIMG/comic/6.jpg",
+    "2_WorkIMG/comic/7.jpg",
+    "2_WorkIMG/comic/8.jpg",
+    "2_WorkIMG/comic/9.jpg",
+    "2_WorkIMG/comic/10.jpg",
+    "2_WorkIMG/comic/11.jpg",
+    "2_WorkIMG/comic/12.jpg",
+    "2_WorkIMG/comic/13.jpg",
+    "2_WorkIMG/comic/14.jpg",
+    "2_WorkIMG/comic/15.jpg",
+    "2_WorkIMG/comic/16.jpg"
+  ],
+  "animation": {
+    "video": "2_WorkIMG/animation/main.mp4",
+    "poster": "2_WorkIMG/animation/poster.jpg"
+  }
+}
