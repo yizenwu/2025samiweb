@@ -7,10 +7,10 @@
       --shadow2: 0 26px 90px rgba(0,0,0,.28);
       --radius: 26px;
 
-      /* header height per breakpoint */
+      /* 導覽列高度 */
       --hdrH: 72px;
 
-      /* safe-area */
+      /* 主頁圖片圓角 */
       --sat: env(safe-area-inset-top, 0px);
       --sar: env(safe-area-inset-right, 0px);
       --sab: env(safe-area-inset-bottom, 0px);
@@ -30,7 +30,7 @@
       touch-action: manipulation;
     }
 
-    /* ===== ARTY OVERLAYS ===== */
+    /*  暗角視覺立體效果  */
     .vignette{
       pointer-events:none;
       position:fixed; inset:-40px;
@@ -51,7 +51,7 @@
 
     
 
-    /* ===== HEADER ===== */
+    /* 導覽列 */
     header{
       position:fixed;
       top:0; left:0; right:0;
@@ -120,7 +120,7 @@
     .navlink.is-active::after{ transform:scaleX(1); }
     .navlink:active{ transform: translateY(1px); }
 
-    /* ===== PANELS ===== */
+    /* 螢幕內容 */
     main{ padding-top: calc(var(--hdrH) + var(--sat)); }
     .panel{
       height: calc(100svh - (var(--hdrH) + var(--sat)));
@@ -135,7 +135,7 @@
       padding-right: var(--sar);
     }
 
-    /* ===== HERO ===== */
+    /* Index首頁大圖片*/
     .aboutHero{ background:#f6f6f6; }
     .aboutHeroFrame{
       width:min(1200px, 92vw);
@@ -200,14 +200,12 @@
       text-shadow: 0 18px 60px rgba(0,0,0,.45);
     }
 
-    /* =========================================================
-       RE-DESIGN: ABOUT PANEL (clean / pro / “隊旗”)
-       ========================================================= */
+    /* 自我介紹雙卡片版型 */
 
     .aboutPanel{
       background: var(--paper);
-      overflow: visible; /* important: no clipping */
-      height:auto;       /* important: responsive + no clipping */
+      overflow: visible; 
+      height:auto;       
       min-height: 0;
       padding: clamp(18px, 3vw, 34px) 0 clamp(70px, 10vh, 110px);
     }
@@ -231,7 +229,7 @@
       z-index:2;
     }
 
-    /* Left: “隊旗” banner card */
+    /* 左邊 */
     .banner{
       border-radius: calc(var(--radius) + 12px);
       background: rgba(255,255,255,.78);
@@ -245,7 +243,6 @@
       opacity: var(--bno,1);
     }
 
-    /* top notch / flag silhouette */
     .banner::after{
       content:"";
       position:absolute;
@@ -279,7 +276,7 @@
       gap: 14px;
     }
 
-    /* Centered image area */
+    /* 居中圖片 */
     .bannerMedia{
       border-radius: 22px;
       overflow:hidden;
@@ -336,7 +333,7 @@
     .glyph .g1{ font-size: 14px; letter-spacing:.10em; opacity:.75; }
     .glyph .g2{ font-size: clamp(26px, 2.6vw, 40px); line-height: 1.0; letter-spacing:.04em; }
 
-    /* Right: About card (clean) */
+    /* 右邊 */
     .aboutCard{
       border-radius: calc(var(--radius) + 12px);
       background: rgba(255,255,255,.78);
@@ -433,7 +430,7 @@
     .line{ height:1px; background: rgba(0,0,0,.14); flex:1; }
     .dot{ width:10px; height:10px; border-radius:99px; background: rgba(0,0,0,.28); }
 
-    /* ===== FOLLOW PANEL ===== */
+    /* 聯絡資訊區域 */
     .contact{ background: var(--blue); color:#fff; }
     .contact::before{
       content:"";
@@ -523,11 +520,8 @@
     .submit:active{ transform: translateY(1px) scale(.99); }
     .toast{ margin-top: 10px; font-weight:800; opacity:.9; min-height: 22px; }
 
-    /* =========================================================
-       RESPONSIVE (match index/work style + no clipping)
-       ========================================================= */
 
-    /* header wrap (same as index/work) */
+    /* 響應式 */
     @media (max-width: 860px){
       :root{ --hdrH: 98px; }
       .topbar{
@@ -551,12 +545,12 @@
     }
 
     @media (max-width: 1024px){
-      /* About stage becomes stacked and content height */
+
       .aboutStage{
         grid-template-columns: 1fr;
         gap: 14px;
       }
-      .bannerMedia{ aspect-ratio: 16 / 9; } /* nicer on tablet */
+      .bannerMedia{ aspect-ratio: 16 / 9; } 
       .panel.contact{
         height:auto;
         min-height: 0;
@@ -585,7 +579,7 @@
       .followRow{ gap:12px; }
       .social a{ width:48px; height:48px; border-radius:14px; }
       .social img{ width:28px; height:28px; }
-      .input{ font-size:16px; } /* prevent iOS zoom */
+      .input{ font-size:16px; } 
     }
 
     @media (max-width: 420px){
@@ -596,7 +590,7 @@
       .followText{ letter-spacing:.10em; }
     }
 
-    /* Touch devices: reduce hover-only behaviors */
+  
     @media (hover: none) and (pointer: coarse){
       .navlink:hover::after{ transform:scaleX(0); }
       .social a:hover{ transform:none; }

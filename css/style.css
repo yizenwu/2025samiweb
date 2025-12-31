@@ -6,10 +6,10 @@
       --shadow: 0 24px 70px rgba(0,0,0,.18);
       --radius: 26px;
 
-      /* header height per breakpoint */
+      /* 導覽列高度*/
       --hdrH: 72px;
 
-      /* safe-area */
+      /* 主頁圖片圓角 */
       --sat: env(safe-area-inset-top, 0px);
       --sar: env(safe-area-inset-right, 0px);
       --sab: env(safe-area-inset-bottom, 0px);
@@ -29,7 +29,7 @@
       touch-action: manipulation;
     }
 
-    /* ===== overlays ===== */
+    /* 暗角視覺立體效果 */
     .vignette{
       pointer-events:none;
       position:fixed; inset:-40px;
@@ -49,7 +49,7 @@
     }
 
 
-    /* ===== header ===== */
+    /* 導覽列 */
     header{
       position:fixed;
       top:0; left:0; right:0;
@@ -118,7 +118,7 @@
     .navlink.is-active::after{ transform:scaleX(1); }
     .navlink:active{ transform: translateY(1px); }
 
-    /* ===== panels ===== */
+    /* 螢幕內容*/
     main{ padding-top: calc(var(--hdrH) + var(--sat)); }
     .panel{
       height: calc(100svh - (var(--hdrH) + var(--sat)));
@@ -133,10 +133,8 @@
       padding-right: var(--sar);
     }
 
-    /* NOTE: works panel must not cut cards on responsive.
-       We'll override panel sizing for .panel.works below. */
 
-    /* ===== hero ===== */
+    /* Index首頁大圖片*/
     .workHero{ background:#f5f5f5; }
     .workHeroFrame{
       width:min(1200px, 92vw);
@@ -194,7 +192,7 @@
       line-height:1.02;
     }
 
-    /* ===== cards ===== */
+    /* 作品分類區塊*/
     .works{ background: var(--orange); }
     .works::before{
       content:"";
@@ -206,7 +204,7 @@
       opacity:.95;
     }
 
-    /* Desktop stage */
+    /* 作品分類區塊效果*/
     .cardsStage{
       width:min(1200px, 92vw);
       height:min(680px, calc(100% - 46px));
@@ -267,7 +265,7 @@
     .card--comic{  left: 62%; top:  18%; width: 16%; height: 58%; }
     .card--cosplay{left: 80%; top:  14%; width: 18%; height: 62%; }
 
-    /* ===== follow ===== */
+    /* 聯絡資訊區域 */
     .contact{ background: var(--blue); color:#fff; }
     .contact::before{
       content:"";
@@ -357,13 +355,11 @@
     .submit:active{ transform: translateY(1px) scale(.99); }
     .toast{ margin-top: 10px; font-weight:800; opacity:.9; min-height: 22px; }
 
-    /* =========================================================
-       RESPONSIVE: keep parallax, but avoid "works" card clipping
-       ========================================================= */
 
-    /* Tablet & below: allow header to wrap; adjust spacing */
+
+    /* 響應式 */
     @media (max-width: 860px){
-      :root{ --hdrH: 98px; } /* allow wrapped nav */
+      :root{ --hdrH: 98px; } /* 可換行 */
       .topbar{
         padding: 12px 16px;
         align-items:flex-start;
@@ -385,13 +381,12 @@
       .workTitleWrap{ max-width: 96%; }
     }
 
-    /* ===== RWD for works cards: GRID (no clipping, full visible) ===== */
     @media (max-width: 1024px){
-      /* Key: works panel becomes content-height (not fixed viewport) */
+    
       .panel.works{
         height:auto;
         min-height: 0;
-        overflow: visible; /* ensure nothing clips */
+        overflow: visible; 
         padding: 26px 0 34px;
       }
 
@@ -441,7 +436,7 @@
       .followRow{ gap:12px; }
       .social a{ width:48px; height:48px; border-radius:14px; }
       .social img{ width:28px; height:28px; }
-      .input{ font-size:16px; } /* keep 16 to avoid iOS zoom */
+      .input{ font-size:16px; }
     }
 
     @media (max-width: 420px){
@@ -452,7 +447,6 @@
       .followText{ letter-spacing:.10em; }
     }
 
-    /* Contact panel: on smaller screens allow height to grow naturally */
     @media (max-width: 1024px){
       .panel.contact{
         height:auto;
@@ -466,7 +460,6 @@
       }
     }
 
-    /* Touch devices: reduce hover-only behaviors */
     @media (hover: none) and (pointer: coarse){
       .card:hover .cardMedia{
         filter: blur(10px) saturate(1.10) contrast(1.06);
