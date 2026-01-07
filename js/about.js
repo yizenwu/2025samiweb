@@ -1,5 +1,4 @@
 
-    /* ========= utils ========= */
     const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
     function smooth(current, target, dt, tau = 0.12){
       const a = 1 - Math.exp(-dt / tau);
@@ -17,41 +16,8 @@
     const mqPhone  = matchMedia("(max-width: 600px)");
     const mqTablet = matchMedia("(max-width: 1024px)");
 
-    /* ========= cursor (disable on touch) ========= */
-    const cursor = document.getElementById('cursor');
-    const isCoarse = matchMedia('(pointer: coarse)').matches;
 
-    if (!isCoarse && cursor){
-      let cx=innerWidth/2, cy=innerHeight/2, tx=cx, ty=cy;
-      addEventListener('mousemove',(e)=>{ tx=e.clientX; ty=e.clientY; cursor.classList.add('cursor--on'); }, {passive:true});
-      (function rafCursor(){
-        cx += (tx-cx)*0.18; cy += (ty-cy)*0.18;
-        cursor.style.left=cx+'px'; cursor.style.top=cy+'px';
-        requestAnimationFrame(rafCursor);
-      })();
-
-      const hoverSet = new Set([...document.querySelectorAll('a, button, input, .js-hover')]);
-      hoverSet.forEach(el=>{
-        el.addEventListener('mouseenter', ()=>cursor.classList.add('cursor--big'));
-        el.addEventListener('mouseleave', ()=>cursor.classList.remove('cursor--big'));
-      });
-    } else {
-      cursor?.remove();
-    }
-
-    // cursor blue on follow
-    const follow = document.getElementById('follow');
-    if (follow && !isCoarse){
-      new IntersectionObserver((entries)=>{
-        entries.forEach(e=>{
-          const c = document.querySelector('.cursor');
-          if(!c) return;
-          c.classList.toggle('cursor--blue', e.isIntersecting);
-        });
-      },{threshold:.25}).observe(follow);
-    }
-
-    /* ========= form demo ========= */
+    /*  聯絡表單送出 */
     const form = document.getElementById('contactForm');
     const toast = document.getElementById('toast');
     form?.addEventListener('submit',(e)=>{
@@ -63,7 +29,7 @@
       setTimeout(()=>toast.textContent='', 2200);
     });
 
-    /* ========= grain (reuse buffer, efficient like your other pages) ========= */
+    /* 躁點質感 */
     const g = document.getElementById('grain');
     const ctx = g?.getContext?.('2d', {alpha:true});
     let noise = { w:0, h:0, img:null, off:null, offctx:null };
@@ -110,7 +76,7 @@
     }
     requestAnimationFrame(drawGrain);
 
-    /* ========= PARALLAX ========= */
+    /* 滾動視差 */
     const heroPanel  = document.querySelector('.panel.aboutHero');
     const aboutPanel = document.querySelector('.panel.aboutPanel');
     const aboutBg    = document.getElementById('aboutBg');
@@ -139,7 +105,7 @@
       const isPhone  = mqPhone.matches;
       const isTablet = mqTablet.matches && !isPhone;
 
-      /* HERO bg */
+      /* about me的滾動視差 */
       if (!reduced && heroPanel && aboutBg){
         const off = centerOffset(heroPanel);
         const a   = clamp(Math.abs(off),0,1);
@@ -153,13 +119,11 @@
         aboutBg.style.transform = `translate3d(0, ${heroY.toFixed(2)}px, 0) scale(1.08)`;
       }
 
-      /* ABOUT panel parallax (desktop only). On tablet/phone keep clean layout. */
       if (!reduced && aboutPanel && banner && aboutCard){
         const off = centerOffset(aboutPanel);
         const a   = clamp(Math.abs(off),0,1);
 
         if (isTablet || isPhone){
-          // reset transforms for clean stacked view
           banner.style.setProperty('--bnx','0px');
           banner.style.setProperty('--bny','0px');
           banner.style.setProperty('--bno','1');
@@ -208,7 +172,7 @@
         aboutCard.style.setProperty('--aco', aco.toFixed(3));
         aboutCard.style.setProperty('--acr', acr.toFixed(2)+'deg');
 
-        // stamp + image micro motion (subtle)
+  
         const stxT = (-off) * 10;
         const styT = ( a)  * 8;
         const strT = (off) * 2.0;
